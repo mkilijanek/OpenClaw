@@ -4,6 +4,7 @@
 #include "../Actor/Components/RenderComponent.h"
 #include "../Graphics2D/Image.h"
 #include "../GameApp/BaseGameApp.h"
+#include "../Util/Profilers.h"
 
 SDL2TilePlaneSceneNode::SDL2TilePlaneSceneNode(const uint32 actorId,
     BaseRenderComponent* pRenderComponent,
@@ -21,10 +22,23 @@ SDL2TilePlaneSceneNode::~SDL2TilePlaneSceneNode()
 
 void SDL2TilePlaneSceneNode::VRender(Scene* pScene)
 {
+    PROFILE_CPU("TilePlaneSceneNode::VRender");
+
     TilePlaneRenderComponent* pRenderComponent = static_cast<TilePlaneRenderComponent*>(m_pRenderComponent);
 
     const TilePlaneProperties* pProperties = pRenderComponent->GetTilePlaneProperties();
     const TileImageList* pImageList = pRenderComponent->GetTileImageList();
+
+    auto WrapIndex = [](int32_t index, int32_t axisSize) -> int32_t
+    {
+        int32_t mod = index % axisSize;
+        if (mod < 0)
+        {
+            mod += axisSize;
+        }
+
+        return mod;
+    };
 
     shared_ptr<CameraNode> camera = pScene->GetCamera();
     SDL_Renderer* renderer = pScene->GetRenderer();
@@ -52,39 +66,29 @@ void SDL2TilePlaneSceneNode::VRender(Scene* pScene)
 
     // Some planes (Back, Front) repeat themselves, which means they can be rendered
     // even when out of bounds
-    int32_t maxTileIdxX = pProperties->tilesOnAxisX;
-    int32_t maxTileIdxY = pProperties->tilesOnAxisY;
-    int32_t minTileIdxX = 0;
-    int32_t minTileIdxY = 0;
-    // TODO: Wrap even when when out of bounds on the negative side
-    if (pProperties->isWrappedX)
-    {
-        maxTileIdxX = INT32_MAX;
-        minTileIdxX = 0;
-    }
-    if (pProperties->isWrappedY)
-    {
-        maxTileIdxY = INT32_MAX;
-        minTileIdxY = 0;
-    }
+    bool isWrappedX = pProperties->isWrappedX;
+    bool isWrappedY = pProperties->isWrappedY;
+
+    int32_t lastRowToRender = startRow + rowTilesToRender;
+    int32_t lastColToRender = startCol + colTilesToRender;
 
     int32_t row, col;
-    for (row = startRow; row < (startRow + rowTilesToRender) && row <= maxTileIdxY; row++)
+    for (row = startRow; row < lastRowToRender; row++)
     {
-        if (row < minTileIdxY)
+        if (!isWrappedY && (row < 0 || row >= pProperties->tilesOnAxisY))
         {
             continue;
         }
-        const int rowTileIndex = row % pProperties->tilesOnAxisY;
+        const int rowTileIndex = isWrappedY ? WrapIndex(row, pProperties->tilesOnAxisY) : row;
 
-        for (col = startCol; col < (startCol + colTilesToRender) && col <= maxTileIdxX; col++)
+        for (col = startCol; col < lastColToRender; col++)
         {
             // Dont render anything out of bounds
-            if (col < minTileIdxX)
+            if (!isWrappedX && (col < 0 || col >= pProperties->tilesOnAxisX))
             {
                 continue;
             }
-            const int colTileIndex = col % pProperties->tilesOnAxisX;
+            const int colTileIndex = isWrappedX ? WrapIndex(col, pProperties->tilesOnAxisX) : col;
 
             Image* image = (*pImageList)[rowTileIndex * pProperties->tilesOnAxisX + colTileIndex];
 
