@@ -970,7 +970,19 @@ bool BaseGameApp::ReadActorXmlPrototypes(GameOptions& gameOptions)
 
     for (const std::string& protoFile : xmlActorPrototypeFiles)
     {
-        TiXmlElement* pActorProtoElem = XmlResourceLoader::LoadAndReturnRootXmlElement(protoFile.c_str());
+        std::shared_ptr<TiXmlDocument> xmlDocument = XmlResourceLoader::LoadAndReturnRootXmlElement(protoFile.c_str());
+        if (!xmlDocument)
+        {
+            LOG_ERROR("Failed to load actor prototype XML: " + protoFile);
+            return false;
+        }
+
+        TiXmlElement* pActorProtoElem = xmlDocument->RootElement();
+        if (pActorProtoElem == nullptr)
+        {
+            LOG_ERROR("Actor prototype XML missing root element: " + protoFile);
+            return false;
+        }
         std::string protoName;
         if (!ParseAttributeFromXmlElem(&protoName, "ActorPrototypeName", pActorProtoElem))
         {
@@ -1042,10 +1054,17 @@ bool BaseGameApp::ReadLevelMetadata(GameOptions& gameOptions)
     std::vector<std::string> xmlLevelMetadataFiles = m_pResourceMgr->VMatch(LEVEL_METADATA_ARCHIVE_FOLDER + "/*.XML");
     for (const std::string& metadataFile : xmlLevelMetadataFiles)
     {
-        TiXmlElement* pRootElem = XmlResourceLoader::LoadAndReturnRootXmlElement(metadataFile.c_str());
-        if (pRootElem == NULL)
+        std::shared_ptr<TiXmlDocument> xmlDocument = XmlResourceLoader::LoadAndReturnRootXmlElement(metadataFile.c_str());
+        if (!xmlDocument)
         {
             LOG_ERROR("Failed to parse level metadata file: " + metadataFile);
+            return false;
+        }
+
+        TiXmlElement* pRootElem = xmlDocument->RootElement();
+        if (pRootElem == NULL)
+        {
+            LOG_ERROR("Missing root element in level metadata file: " + metadataFile);
             return false;
         }
 

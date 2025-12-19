@@ -183,16 +183,21 @@ StrongActorPtr ActorFactory::CreateActor(TiXmlElement* pActorRoot, TiXmlElement*
 StrongActorPtr ActorFactory::CreateActor(const char* actorResource, TiXmlElement* overrides)
 {
     // Grab the root XML node
-    auto deleter = [](TiXmlElement *e) { delete e->GetDocument(); };
-
-    std::unique_ptr<TiXmlElement, decltype(deleter)> root { XmlResourceLoader::LoadAndReturnRootXmlElement(actorResource, true), deleter};
-    if (root == NULL)
+    std::shared_ptr<TiXmlDocument> document = XmlResourceLoader::LoadAndReturnRootXmlElement(actorResource, true);
+    if (!document)
     {
         LOG_ERROR("Could not load XML root node");
         return nullptr;
     }
 
-    return CreateActor(root.get(), overrides);
+    TiXmlElement* root = document->RootElement();
+    if (root == nullptr)
+    {
+        LOG_ERROR("XML document missing root node");
+        return nullptr;
+    }
+
+    return CreateActor(root, overrides);
 }
 
 void ActorFactory::ModifyActor(StrongActorPtr actor, TiXmlElement* overrides)
