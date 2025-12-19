@@ -725,11 +725,15 @@ void BaseGameLogic::VModifyActor(const uint32 actorId, TiXmlElement* overrides)
 {
     assert(m_pActorFactory);
 
-    auto findIter = m_ActorMap.begin();
-    if (findIter != m_ActorMap.end())
+    auto findIter = m_ActorMap.find(actorId);
+    if (findIter == m_ActorMap.end())
     {
-        m_pActorFactory->ModifyActor(findIter->second, overrides);
+        LOG_ERROR("Attempted to modify missing actor: " + ToStr(actorId));
+        assert(findIter != m_ActorMap.end());
+        return;
     }
+
+    m_pActorFactory->ModifyActor(findIter->second, overrides);
 }
 
 void BaseGameLogic::VOnUpdate(uint32 msDiff)
