@@ -137,6 +137,8 @@ protected:
 
     WeakActorPtr m_pClawActor;
 
+    uint32 m_FixedUpdateAccumulator;
+
 private:
     void ExecuteStartupCommands(const std::string& startupCommandsFile);
     void CreateSinglePhysicsTile(int x, int y, const TileCollisionPrototype& proto);
