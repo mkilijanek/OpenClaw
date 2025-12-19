@@ -26,6 +26,8 @@ public:
 
     bool Initialize();
 
+    void Shutdown();
+
     /*// IGameLogic interface
     virtual WeakActorPtr VGetActorPtr(const uint32 actorId);
     virtual StrongActorPtr VCreateActor(const std::string& xmlActorResource, TiXmlElement* overrides);
@@ -125,6 +127,7 @@ protected:
 
     bool m_Proxy;
     bool m_bRunning;
+    bool m_bShutdown;
 
     bool m_RenderDiagnostics;
     shared_ptr<IGamePhysics> m_pPhysics;

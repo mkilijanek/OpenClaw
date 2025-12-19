@@ -97,13 +97,26 @@ bool BaseGameApp::Initialize(int argc, char** argv)
 
 void BaseGameApp::Terminate()
 {
+    if (m_IsQuitting)
+    {
+        return;
+    }
+    m_IsQuitting = true;
+
     LOG("Terminating...");
+
+    if (m_pGame)
+    {
+        m_pGame->Shutdown();
+    }
 
     RemoveAllDelegates();
 
     SAFE_DELETE(m_pGame);
     SDL_DestroyRenderer(m_pRenderer);
+    m_pRenderer = nullptr;
     SDL_DestroyWindow(m_pWindow);
+    m_pWindow = nullptr;
     SAFE_DELETE(m_pAudio);
     SAFE_DELETE(m_pTouchManager);
     SAFE_DELETE(m_pEventMgr);
@@ -1412,8 +1425,8 @@ void BaseGameApp::RemoveAllDelegates()
 
 void BaseGameApp::QuitGameDelegate(IEventDataPtr pEventData)
 {
-    Terminate();
-    exit(0);
+    m_QuitRequested = true;
+    m_IsRunning = false;
 }
 
 //=====================================================================================================================
