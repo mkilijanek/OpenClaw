@@ -52,6 +52,7 @@ BaseGameLogic::BaseGameLogic()
     m_RenderDiagnostics = true;
     m_SelectedLevel = -1;
     m_bRunning = true;
+    m_bShutdown = false;
 
     m_pGameSaveMgr.reset(new GameSaveMgr());
 
@@ -61,22 +62,10 @@ BaseGameLogic::BaseGameLogic()
 
 BaseGameLogic::~BaseGameLogic()
 {
-    while (!m_GameViews.empty())
-    {
-        m_GameViews.pop_front();
-    }
+    Shutdown();
 
     SAFE_DELETE(m_pProcessMgr);
     SAFE_DELETE(m_pActorFactory);
-
-    // Destroy all actors
-    for (auto &actorIter : m_ActorMap)
-    {
-        actorIter.second->Destroy();
-    }
-    m_ActorMap.clear();
-
-    RemoveAllDelegates();
 }
 
 bool BaseGameLogic::Initialize()
@@ -1297,6 +1286,11 @@ void BaseGameLogic::RegisterAllDelegates()
 
 void BaseGameLogic::RemoveAllDelegates()
 {
+    if (!IEventMgr::Get())
+    {
+        return;
+    }
+
     IEventMgr::Get()->VRemoveListener(MakeDelegate(this, &BaseGameLogic::CollideableTileCreatedDelegate), EventData_Collideable_Tile_Created::sk_EventType);
     IEventMgr::Get()->VRemoveListener(MakeDelegate(this, &BaseGameLogic::RequestDestroyActorDelegate), EventData_Destroy_Actor::sk_EventType);
     IEventMgr::Get()->VRemoveListener(MakeDelegate(this, &BaseGameLogic::CreateStaticGeometryDelegate), EventData_Add_Static_Geometry::sk_EventType);
@@ -1307,6 +1301,34 @@ void BaseGameLogic::RemoveAllDelegates()
     IEventMgr::Get()->VRemoveListener(MakeDelegate(this, &BaseGameLogic::BossFightStartedDelegate), EventData_Boss_Fight_Started::sk_EventType);
     IEventMgr::Get()->VRemoveListener(MakeDelegate(this, &BaseGameLogic::IngameMenuEndLifeDelegate), EventData_IngameMenu_End_Life::sk_EventType);
     IEventMgr::Get()->VRemoveListener(MakeDelegate(this, &BaseGameLogic::WorldFinishedLoadingDelegate), EventData_World_Finished_Loading::sk_EventType);
+}
+
+void BaseGameLogic::Shutdown()
+{
+    if (m_bShutdown)
+    {
+        return;
+    }
+    m_bShutdown = true;
+
+    m_bRunning = false;
+
+    if (IEventMgr::Get())
+    {
+        IEventMgr::Get()->VAbortAllEvents();
+    }
+
+    for (auto &actorIter : m_ActorMap)
+    {
+        actorIter.second->Destroy();
+    }
+    m_ActorMap.clear();
+
+    m_GameViews.clear();
+
+    m_pPhysics.reset();
+
+    RemoveAllDelegates();
 }
 
 void BaseGameLogic::ExecuteStartupCommands(const std::string& startupCommandsFile)
