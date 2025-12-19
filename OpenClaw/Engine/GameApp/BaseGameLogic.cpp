@@ -124,10 +124,17 @@ std::string BaseGameLogic::GetActorXml(uint32 actorId)
 
 bool BaseGameLogic::VEnterMenu(const char* xmlMenuResource)
 {
-    TiXmlElement* pXmlLevelRoot = XmlResourceLoader::LoadAndReturnRootXmlElement(xmlMenuResource);
-    if (pXmlLevelRoot == NULL)
+    std::shared_ptr<TiXmlDocument> xmlDocument = XmlResourceLoader::LoadAndReturnRootXmlElement(xmlMenuResource);
+    if (!xmlDocument)
     {
         LOG_ERROR("Could not load menu resource file: " + std::string(xmlMenuResource));
+        return false;
+    }
+
+    TiXmlElement* pXmlLevelRoot = xmlDocument->RootElement();
+    if (pXmlLevelRoot == nullptr)
+    {
+        LOG_ERROR("Menu resource file is missing root element: " + std::string(xmlMenuResource));
         return false;
     }
 
@@ -457,10 +464,17 @@ bool BaseGameLogic::VLoadGame(const char* xmlLevelResource)
 
 bool BaseGameLogic::VLoadScoreScreen(const char* xmlScoreScreenResource)
 {
-    TiXmlElement* pScoreScreenRootElem = XmlResourceLoader::LoadAndReturnRootXmlElement(xmlScoreScreenResource);
-    if (pScoreScreenRootElem == NULL)
+    std::shared_ptr<TiXmlDocument> xmlDocument = XmlResourceLoader::LoadAndReturnRootXmlElement(xmlScoreScreenResource);
+    if (!xmlDocument)
     {
         LOG_ERROR("Failed to load score screen XML resource: " + std::string(xmlScoreScreenResource));
+        return false;
+    }
+
+    TiXmlElement* pScoreScreenRootElem = xmlDocument->RootElement();
+    if (pScoreScreenRootElem == NULL)
+    {
+        LOG_ERROR("Score screen XML missing root element: " + std::string(xmlScoreScreenResource));
         return false;
     }
 

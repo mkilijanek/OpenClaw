@@ -101,7 +101,10 @@ bool ClawHumanView::VLoadGameDelegate(TiXmlElement* pLevelXmlElem, LevelData* pL
         return false;
     }
 
-    TiXmlElement* pXmlIngameMenuRoot = XmlResourceLoader::LoadAndReturnRootXmlElement("INGAME_MENU.XML");
+    std::shared_ptr<TiXmlDocument> xmlDocument = XmlResourceLoader::LoadAndReturnRootXmlElement("INGAME_MENU.XML");
+    assert(xmlDocument != nullptr);
+
+    TiXmlElement* pXmlIngameMenuRoot = xmlDocument->RootElement();
     assert(pXmlIngameMenuRoot != NULL);
 
     m_pIngameMenu.reset(new ScreenElementMenu(g_pApp->GetRenderer()));

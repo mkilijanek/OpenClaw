@@ -820,7 +820,10 @@ void HumanView::ClawDiedDelegate(IEventDataPtr pEventData)
 
     if (pCastEventData->GetRemainingLives() < 0)
     {
-        TiXmlElement* pXmlGameOverMenuRoot = XmlResourceLoader::LoadAndReturnRootXmlElement("GAME_OVER_MENU.XML");
+        std::shared_ptr<TiXmlDocument> xmlDocument = XmlResourceLoader::LoadAndReturnRootXmlElement("GAME_OVER_MENU.XML");
+        assert(xmlDocument != nullptr);
+
+        TiXmlElement* pXmlGameOverMenuRoot = xmlDocument->RootElement();
         assert(pXmlGameOverMenuRoot != NULL);
 
         shared_ptr<ScreenElementMenu> pGameOverMenu(new ScreenElementMenu(g_pApp->GetRenderer()));
