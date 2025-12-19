@@ -118,9 +118,13 @@ void BaseGameApp::Terminate()
     SDL_DestroyWindow(m_pWindow);
     m_pWindow = nullptr;
     SAFE_DELETE(m_pAudio);
+    m_pAudio = nullptr;
     SAFE_DELETE(m_pTouchManager);
+    m_pTouchManager = nullptr;
     SAFE_DELETE(m_pEventMgr);
+    m_pEventMgr = nullptr;
     SAFE_DELETE(m_pResourceMgr);
+    m_pResourceMgr = nullptr;
     if (m_pConsoleFont) {
         TTF_CloseFont(m_pConsoleFont);
         m_pConsoleFont = nullptr;
