@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <algorithm>
 #include "Scene.h"
 #include "TilePlaneSceneNode.h"
 #include "../Actor/Components/RenderComponent.h"
@@ -33,8 +34,6 @@ void SDL2TilePlaneSceneNode::VRender(Scene* pScene)
     int32 tilePixelWidth = pProperties->tilePixelWidth;
     int32 tilePixelHeight = pProperties->tilePixelHeight;
 
-    const int32_t numTilesPadding = 0;
-
     const SDL_Rect cameraRect = camera->GetCameraRect();
 
     float movementRatioX = pProperties->movementPercentX / 100.0f;
@@ -43,48 +42,44 @@ void SDL2TilePlaneSceneNode::VRender(Scene* pScene)
     float parallaxCameraPosX = (float) cameraRect.x * movementRatioX;
     float parallaxCameraPosY = (float) cameraRect.y * movementRatioY;
 
-    int32_t startCol = (int32_t)(parallaxCameraPosX / tilePixelWidth) - numTilesPadding;
-    int32_t startRow = (int32_t)(parallaxCameraPosY / tilePixelHeight) - numTilesPadding;
+    const auto wrapIndex = [](int32 value, int32 modulo) -> int32 {
+        int32 wrapped = value % modulo;
+        return wrapped < 0 ? wrapped + modulo : wrapped;
+    };
 
-    // We need to add 2 due to startCol/startRow + colTilesToRender/rowTilesToRender float->int casting
-    int32_t colTilesToRender = (uint32_t)(cameraRect.w / tilePixelWidth) + 2 + numTilesPadding;
-    int32_t rowTilesToRender = (uint32_t)(cameraRect.h / tilePixelHeight) + 2 + numTilesPadding;
+    int32_t startCol = (int32_t)(parallaxCameraPosX / tilePixelWidth);
+    int32_t startRow = (int32_t)(parallaxCameraPosY / tilePixelHeight);
 
-    // Some planes (Back, Front) repeat themselves, which means they can be rendered
-    // even when out of bounds
-    int32_t maxTileIdxX = pProperties->tilesOnAxisX;
-    int32_t maxTileIdxY = pProperties->tilesOnAxisY;
-    int32_t minTileIdxX = 0;
-    int32_t minTileIdxY = 0;
-    // TODO: Wrap even when when out of bounds on the negative side
-    if (pProperties->isWrappedX)
+    int32_t colTilesToRender = (cameraRect.w + tilePixelWidth - 1) / tilePixelWidth + 1;
+    int32_t rowTilesToRender = (cameraRect.h + tilePixelHeight - 1) / tilePixelHeight + 1;
+
+    if (!pProperties->isWrappedX)
     {
-        maxTileIdxX = INT32_MAX;
-        minTileIdxX = 0;
-    }
-    if (pProperties->isWrappedY)
-    {
-        maxTileIdxY = INT32_MAX;
-        minTileIdxY = 0;
+        int32_t endCol = std::min<int32_t>(startCol + colTilesToRender, pProperties->tilesOnAxisX);
+        startCol = std::max<int32_t>(startCol, 0);
+        colTilesToRender = std::max<int32_t>(endCol - startCol, 0);
     }
 
-    int32_t row, col;
-    for (row = startRow; row < (startRow + rowTilesToRender) && row <= maxTileIdxY; row++)
+    if (!pProperties->isWrappedY)
     {
-        if (row < minTileIdxY)
-        {
-            continue;
-        }
-        const int rowTileIndex = row % pProperties->tilesOnAxisY;
+        int32_t endRow = std::min<int32_t>(startRow + rowTilesToRender, pProperties->tilesOnAxisY);
+        startRow = std::max<int32_t>(startRow, 0);
+        rowTilesToRender = std::max<int32_t>(endRow - startRow, 0);
+    }
 
-        for (col = startCol; col < (startCol + colTilesToRender) && col <= maxTileIdxX; col++)
+    for (int32_t rowOffset = 0; rowOffset < rowTilesToRender; ++rowOffset)
+    {
+        int32_t row = startRow + rowOffset;
+        const int rowTileIndex = pProperties->isWrappedY
+            ? wrapIndex(row, pProperties->tilesOnAxisY)
+            : row;
+
+        for (int32_t colOffset = 0; colOffset < colTilesToRender; ++colOffset)
         {
-            // Dont render anything out of bounds
-            if (col < minTileIdxX)
-            {
-                continue;
-            }
-            const int colTileIndex = col % pProperties->tilesOnAxisX;
+            int32_t col = startCol + colOffset;
+            const int colTileIndex = pProperties->isWrappedX
+                ? wrapIndex(col, pProperties->tilesOnAxisX)
+                : col;
 
             Image* image = (*pImageList)[rowTileIndex * pProperties->tilesOnAxisX + colTileIndex];
 
