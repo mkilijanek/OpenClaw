@@ -605,7 +605,7 @@ bool BaseGameLogic::VLoadScoreScreen(const char* xmlScoreScreenResource)
 
             totalCount += m_pCurrentLevel->m_TotalPickupsMap[PickupType_Treasure_Rings_Red];
             totalCount += m_pCurrentLevel->m_TotalPickupsMap[PickupType_Treasure_Rings_Green];
-            totalCount += m_pCurrentLevel->m_TotalPickupsMap[PickupType_Treasure_Rings_Purple];
+            totalCount += m_pCurrentLevel->m_TotalPickupsMap[PickupType_Treasure_Rings_Blue];
             totalCount += m_pCurrentLevel->m_TotalPickupsMap[PickupType_Treasure_Rings_Purple];
         }
         else if (treasureTypeStr == "Goldbar")
