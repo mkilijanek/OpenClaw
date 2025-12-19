@@ -656,6 +656,10 @@ bool BaseGameApp::LoadGameOptions(const char* inConfigFile)
             pGlobalOptionsRootElem->FirstChildElement("IdleSoundQuoteInterval"));
         ParseValueFromXmlElem(&m_GlobalOptions.platformSpeedModifier,
             pGlobalOptionsRootElem->FirstChildElement("PlatformSpeedModifier"));
+        ParseValueFromXmlElem(&m_GlobalOptions.useFixedTimestep,
+            pGlobalOptionsRootElem->FirstChildElement("UseFixedTimestep"));
+        ParseValueFromXmlElem(&m_GlobalOptions.fixedTimestepMs,
+            pGlobalOptionsRootElem->FirstChildElement("FixedTimestepMs"));
         ParseValueFromXmlElem(&m_GlobalOptions.runSpeed,
             pGlobalOptionsRootElem->FirstChildElement("RunSpeed"));
         ParseValueFromXmlElem(&m_GlobalOptions.powerupRunSpeed,

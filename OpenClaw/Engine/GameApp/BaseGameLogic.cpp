@@ -52,6 +52,7 @@ BaseGameLogic::BaseGameLogic()
     m_RenderDiagnostics = true;
     m_SelectedLevel = -1;
     m_bRunning = true;
+    m_FixedUpdateAccumulator = 0;
 
     m_pGameSaveMgr.reset(new GameSaveMgr());
 
@@ -804,26 +805,29 @@ void BaseGameLogic::VOnUpdate(uint32 msDiff)
             if (m_pPhysics)
             {
                 //PROFILE_CPU("PHYSICS");
-                // TODO: Add config to choose between fixed physics timestep and variable
-                if (true)
+                const GlobalOptions* pGlobalOptions = g_pApp->GetGlobalOptions();
+                if (!pGlobalOptions->useFixedTimestep)
                 {
+                    m_FixedUpdateAccumulator = 0;
                     m_pPhysics->VOnUpdate(msDiff);
                     m_pPhysics->VSyncVisibleScene();
                 }
                 else
                 {
-                    static uint32 timeSinceLastUpdate = 0;
-                    const uint32 updateInterval = 1000 / 120;
+                    const uint32 updateInterval = std::max<uint32>(1, pGlobalOptions->fixedTimestepMs);
 
-                    timeSinceLastUpdate += msDiff;
-                    if (timeSinceLastUpdate >= updateInterval)
+                    m_FixedUpdateAccumulator += msDiff;
+                    bool physicsUpdated = false;
+                    while (m_FixedUpdateAccumulator >= updateInterval)
                     {
                         //PROFILE_CPU("PHYSICS");
-                        //LOG(ToStr(timeSinceLastUpdate));
-                        m_pPhysics->VOnUpdate(timeSinceLastUpdate);
+                        m_pPhysics->VOnUpdate(updateInterval);
+                        physicsUpdated = true;
+                        m_FixedUpdateAccumulator -= updateInterval;
+                    }
+                    if (physicsUpdated)
+                    {
                         m_pPhysics->VSyncVisibleScene();
-
-                        timeSinceLastUpdate = 0;
                     }
                 }
                 break;

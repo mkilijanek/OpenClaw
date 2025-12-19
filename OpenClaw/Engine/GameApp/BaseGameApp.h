@@ -131,6 +131,8 @@ struct GlobalOptions
         maxFallSpeed = 14.0;
         idleSoundQuoteIntervalMs = 15000;
         platformSpeedModifier = 0.015;
+        useFixedTimestep = false;
+        fixedTimestepMs = 8;
         runSpeed = 4.5f;
         powerupRunSpeed = 5.5f;
         maxJumpHeight = 150;
@@ -152,6 +154,8 @@ struct GlobalOptions
     double maxFallSpeed;
     int idleSoundQuoteIntervalMs;
     double platformSpeedModifier;
+    bool useFixedTimestep;
+    uint32 fixedTimestepMs;
     float runSpeed;
     float powerupRunSpeed;
     float maxJumpHeight;
